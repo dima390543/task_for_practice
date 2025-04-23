@@ -6,6 +6,11 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import re
 import sqlite3
+import os
+
+file_db = 'list_ip.sqlite3'
+if os.path.exists(file_db):
+    os.remove(file_db)
 
 #виды деятельностей ИП.
 t = (
@@ -15,7 +20,7 @@ t = (
     ("03.2", ), # 7123 записей
     ("03", )# 15000 записей
 )
-i = 2 # выбор входных данных
+i = 1 # выбор входных данных
 
 current_okvedip = t[i] #кортеж номеров ОКВЭД
 
@@ -87,14 +92,12 @@ WebDriverWait(driver, 100).until(EC.invisibility_of_element_located((By.ID, 'txt
 table_rows = result_data.find_elements(By.CLASS_NAME, 'pb-card')# все записи ИП по выбранным ОКВЭД
 
 
-
-
 #контекстный менеджер
-with sqlite3.connect('test.sqlite3') as conn:
+with sqlite3.connect(file_db) as conn:
     cursor = conn.cursor()
 
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS test (
+    CREATE TABLE IF NOT EXISTS InformationIp (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         full_name TEXT,
         status TEXT,
@@ -113,12 +116,12 @@ with sqlite3.connect('test.sqlite3') as conn:
         data = row.text.split('\n')
         if len(data) == 11:
             cursor.execute('''
-           INSERT INTO test (full_name, status, edo_status, inn, ogrnip, ogrnip_date, code_okvd, activity)
+           INSERT INTO InformationIp (full_name, status, edo_status, inn, ogrnip, ogrnip_date, code_okvd, activity)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
            ''', (data[0], data[1], data[2], data[4], data[6], data[8], data[9], data[10]))
         elif len(data) < 11:
             cursor.execute('''
-            INSERT INTO test (full_name, edo_status, inn, ogrnip, ogrnip_date, code_okvd, activity)
+            INSERT INTO InformationIp (full_name, edo_status, inn, ogrnip, ogrnip_date, code_okvd, activity)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (data[0], data[1], data[3], data[5], data[7], data[8], data[9]))
         else:
